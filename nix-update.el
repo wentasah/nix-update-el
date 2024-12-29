@@ -98,6 +98,7 @@
                       (let ((owner (get-field "owner"))
                             (repo (get-field "repo"))
                             (rev (or (and (null arg) (get-field "rev")) ""))
+                            (ref (get-field "# ref"))
                             (submodules
                              (let ((subs (get-field "fetchSubmodules")))
                                (and subs (string-equal subs "true")))))
@@ -110,6 +111,7 @@
                               (concat
                                "nix-prefetch-git --no-deepClone"
                                (if submodules " --fetch-submodules" "")
+                               (if ref (concat " --rev " ref) "")
                                " --quiet https://github.com/%s/%s.git %s")
                               owner repo rev)
                              (current-buffer))
@@ -121,6 +123,7 @@
                      (`"fetchFromGitLab"
                       (let ((owner (get-field "owner"))
                             (repo (get-field "repo"))
+                            (ref (get-field "# ref"))
                             (rev (or (and (null arg) (get-field "rev")) "")))
                         (with-temp-buffer
                           (message "Fetching GitLab repository: %s/%s ..."
@@ -130,6 +133,7 @@
                              (format
                               (concat
                                "nix-prefetch-git --no-deepClone"
+                               (if ref (concat " --rev " ref) "")
                                " --quiet https://gitlab.com/%s/%s.git %s")
                               owner repo rev)
                              (current-buffer))
@@ -140,6 +144,7 @@
                           (json-read-object))))
                      (`"fetchgit"
                       (let ((url (get-field "url"))
+                            (ref (get-field "# ref"))
                             (rev (or (and (null arg) (get-field "rev")) "")))
                         (with-temp-buffer
                           (message "Fetching Git URL: %s ..." url)
@@ -147,6 +152,7 @@
                             (shell-command
                              (format (concat
                                       "nix-prefetch-git --no-deepClone"
+                                      (if ref (concat " --rev " ref) "")
                                       " --quiet '%s' %s")
                                      url rev)
                              (current-buffer))
