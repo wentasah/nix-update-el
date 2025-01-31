@@ -48,6 +48,7 @@
                                   "git"
                                   "Pypi"
                                   "zip"
+                                  "patch"
                                   (and "FromGit" (or "Hub" "Lab"))))))
                     (1+ space)
                     "{"))
@@ -174,6 +175,29 @@
                            (cons 'date
                                  (format-time-string "%Y-%m-%dT%H:%M:%S%z"))
                            (cons 'sha256
+                                 (buffer-substring
+                                  (line-beginning-position)
+                                  (line-end-position)))))))
+                     (`"fetchpatch"
+                      (let* ((url (get-field "url"))
+                             (hash (get-field "hash"))
+                             (fetch-args (if (string-empty-p hash)
+                                             (buffer-string)
+                                           (string-replace hash "" (buffer-string)))))
+                        (set-text-properties 0 (length fetch-args) nil fetch-args)
+                        (with-temp-buffer
+                          (message "Fetching URL %s: ..." url)
+                          (let ((inhibit-redisplay nil)
+                                (cmd (format
+                                      "nix-build --expr 'with import <nixpkgs> {}; fetchpatch %s' |& sed -nEe '/^ *got: *(.*)/ s//\\1/p'"
+                                      fetch-args)))
+                            (shell-command cmd (current-buffer))
+                            (message "Fetching URL %s: ...done" url))
+                          (goto-char (point-min))
+                          (list
+                           (cons 'date
+                                 (format-time-string "%Y-%m-%dT%H:%M:%S%z"))
+                           (cons 'hash
                                  (buffer-substring
                                   (line-beginning-position)
                                   (line-end-position)))))))
